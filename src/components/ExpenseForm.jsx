@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { CATEGORIES } from '../utils/categories';
+import { addExpense, editExpense, clearEditingExpense } from '../store/slices/expensesSlice';
+import { addToast } from '../store/slices/uiSlice';
+import { selectEditingExpense } from '../store/selectors';
 
 const emptyForm = {
   title: '',
@@ -8,7 +12,10 @@ const emptyForm = {
   date: new Date().toISOString().split('T')[0],
 };
 
-export default function ExpenseForm({ onAdd, editingExpense, onUpdate, onCancelEdit }) {
+export default function ExpenseForm() {
+  const dispatch = useDispatch();
+  const editingExpense = useSelector(selectEditingExpense);
+
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,9 +73,11 @@ export default function ExpenseForm({ onAdd, editingExpense, onUpdate, onCancelE
 
     setTimeout(() => {
       if (isEditing) {
-        onUpdate(expense);
+        dispatch(editExpense(expense));
+        dispatch(addToast(`"${expense.title}" updated!`, 'info'));
       } else {
-        onAdd(expense);
+        dispatch(addExpense(expense));
+        dispatch(addToast(`"${expense.title}" added successfully!`, 'success'));
       }
       setForm({ ...emptyForm, date: new Date().toISOString().split('T')[0] });
       setErrors({});
@@ -202,7 +211,7 @@ export default function ExpenseForm({ onAdd, editingExpense, onUpdate, onCancelE
         {isEditing && (
           <button
             type="button"
-            onClick={onCancelEdit}
+            onClick={() => dispatch(clearEditingExpense())}
             className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
           >
             Cancel

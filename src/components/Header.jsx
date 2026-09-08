@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectTotalBalance, selectDarkMode } from '../store/selectors';
+import { toggleDarkMode } from '../store/slices/uiSlice';
 
-export default function Header({ totalBalance, darkMode, onToggleDark }) {
+export default function Header() {
+  const dispatch = useDispatch();
+  const totalBalance = useSelector(selectTotalBalance);
+  const darkMode = useSelector(selectDarkMode);
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -47,7 +53,7 @@ export default function Header({ totalBalance, darkMode, onToggleDark }) {
           {/* Dark Mode Toggle */}
           <button
             id="dark-mode-toggle"
-            onClick={onToggleDark}
+            onClick={() => dispatch(toggleDarkMode())}
             className="relative w-14 h-7 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
             aria-label="Toggle dark mode"
           >

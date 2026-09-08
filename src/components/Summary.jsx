@@ -1,16 +1,11 @@
-import { CATEGORIES, getCategoryConfig } from '../utils/categories';
+import { useSelector } from 'react-redux';
+import { selectCategorySummary, selectExpenseItems } from '../store/selectors';
 
-export default function Summary({ expenses }) {
-  if (expenses.length === 0) return null;
+export default function Summary() {
+  const items = useSelector(selectExpenseItems);
+  const { totals, maxTotal, grandTotal } = useSelector(selectCategorySummary);
 
-  const categoryTotals = CATEGORIES.map((cat) => {
-    const total = expenses
-      .filter((e) => e.category === cat.name)
-      .reduce((sum, e) => sum + e.amount, 0);
-    return { ...cat, total };
-  }).filter((cat) => cat.total > 0);
-
-  const maxTotal = Math.max(...categoryTotals.map((c) => c.total));
+  if (items.length === 0) return null;
 
   return (
     <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700/50 p-5 sm:p-6 shadow-sm">
@@ -22,7 +17,7 @@ export default function Summary({ expenses }) {
       </h2>
 
       <div className="space-y-3">
-        {categoryTotals.map((cat) => {
+        {totals.map((cat) => {
           const percentage = maxTotal > 0 ? (cat.total / maxTotal) * 100 : 0;
           return (
             <div key={cat.name} className="group">
@@ -54,7 +49,7 @@ export default function Summary({ expenses }) {
           Grand Total
         </span>
         <span className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent tabular-nums">
-          ₹{expenses.reduce((s, e) => s + e.amount, 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+          ₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
         </span>
       </div>
     </div>

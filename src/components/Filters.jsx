@@ -1,12 +1,18 @@
+import { useSelector, useDispatch } from 'react-redux';
 import { CATEGORIES } from '../utils/categories';
+import { selectFilters } from '../store/selectors';
+import { setFilter, setSearchTerm, clearFilters } from '../store/slices/expensesSlice';
 
-export default function Filters({ filters, onFilterChange }) {
+export default function Filters() {
+  const dispatch = useDispatch();
+  const filters = useSelector(selectFilters);
+
   function handleChange(field, value) {
-    onFilterChange({ ...filters, [field]: value });
-  }
-
-  function clearFilters() {
-    onFilterChange({ search: '', category: '', dateFrom: '', dateTo: '' });
+    if (field === 'search') {
+      dispatch(setSearchTerm(value));
+    } else {
+      dispatch(setFilter({ field, value }));
+    }
   }
 
   const hasFilters = filters.search || filters.category || filters.dateFrom || filters.dateTo;
@@ -25,7 +31,7 @@ export default function Filters({ filters, onFilterChange }) {
         </h2>
         {hasFilters && (
           <button
-            onClick={clearFilters}
+            onClick={() => dispatch(clearFilters())}
             className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors"
           >
             Clear all

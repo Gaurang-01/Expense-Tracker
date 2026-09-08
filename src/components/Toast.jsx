@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectToasts } from '../store/selectors';
+import { removeToast } from '../store/slices/uiSlice';
 
-export default function Toast({ toasts, onRemove }) {
+export default function Toast() {
+  const toasts = useSelector(selectToasts);
+  const dispatch = useDispatch();
+
   return (
     <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
       {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
+        <ToastItem key={toast.id} toast={toast} onRemove={(id) => dispatch(removeToast(id))} />
       ))}
     </div>
   );

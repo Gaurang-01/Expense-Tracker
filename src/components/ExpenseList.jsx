@@ -1,7 +1,11 @@
+import { useSelector } from 'react-redux';
+import { selectFilteredExpenses } from '../store/selectors';
 import ExpenseItem from './ExpenseItem';
 import EmptyState from './EmptyState';
 
-export default function ExpenseList({ expenses, onEdit, onDelete }) {
+export default function ExpenseList() {
+  const expenses = useSelector(selectFilteredExpenses);
+
   if (expenses.length === 0) {
     return <EmptyState />;
   }
@@ -22,12 +26,7 @@ export default function ExpenseList({ expenses, onEdit, onDelete }) {
 
       <div className="space-y-2">
         {expenses.map((expense) => (
-          <ExpenseItem
-            key={expense.id}
-            expense={expense}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
+          <ExpenseItem key={expense.id} expense={expense} />
         ))}
       </div>
     </div>

@@ -1,14 +1,26 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { getCategoryConfig } from '../utils/categories';
+import { deleteExpense, setEditingExpense } from '../store/slices/expensesSlice';
+import { addToast } from '../store/slices/uiSlice';
 
-export default function ExpenseItem({ expense, onEdit, onDelete }) {
+export default function ExpenseItem({ expense }) {
+  const dispatch = useDispatch();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const cat = getCategoryConfig(expense.category);
 
   function handleDelete() {
     setIsDeleting(true);
-    setTimeout(() => onDelete(expense.id), 300);
+    setTimeout(() => {
+      dispatch(deleteExpense(expense.id));
+      dispatch(addToast(`"${expense.title}" deleted`, 'error'));
+    }, 300);
+  }
+
+  function handleEdit() {
+    dispatch(setEditingExpense(expense));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   const formattedDate = new Date(expense.date + 'T00:00:00').toLocaleDateString('en-IN', {
@@ -85,7 +97,7 @@ export default function ExpenseItem({ expense, onEdit, onDelete }) {
         ) : (
           <>
             <button
-              onClick={() => onEdit(expense)}
+              onClick={handleEdit}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

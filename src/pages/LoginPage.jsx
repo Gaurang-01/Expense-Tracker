@@ -55,7 +55,8 @@ export default function LoginPage() {
     const result = await dispatch(loginUser({ email: email.trim(), password }));
     if (loginUser.fulfilled.match(result)) {
       dispatch(addToast(`Welcome back, ${result.payload.user.name}!`, 'success'));
-      navigate(from, { replace: true });
+      const target = from !== '/app' ? from : (result.payload.user.role === 'admin' ? '/app/admin' : '/app');
+      navigate(target, { replace: true });
     }
   };
 

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { selectDarkMode, selectExpensesLoading, selectExpensesError } from './store/selectors';
 import { fetchExpenses } from './store/slices/expensesSlice';
 import Header from './components/Header';
@@ -14,6 +15,7 @@ export default function App() {
   const darkMode = useSelector(selectDarkMode);
   const loading = useSelector(selectExpensesLoading);
   const error = useSelector(selectExpensesError);
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(fetchExpenses());
@@ -24,6 +26,29 @@ export default function App() {
       <Header />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* Admin Quick Switch Banner */}
+        {user?.role === 'admin' && (
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-900/20 via-indigo-900/10 to-transparent border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🛡️</span>
+              <div>
+                <p className="text-xs font-semibold text-purple-600 dark:text-purple-300 uppercase tracking-wider">
+                  Admin Session Active
+                </p>
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  You are logged in as an Administrator. You can manage expenses here or inspect all registered users in the Admin Panel.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/app/admin"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 transition-all whitespace-nowrap"
+            >
+              Open Admin Panel ➔
+            </Link>
+          </div>
+        )}
+
         {/* Error message if backend error occurs */}
         {error && (
           <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-center justify-between text-rose-700 dark:text-rose-300 text-sm">

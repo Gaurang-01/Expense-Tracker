@@ -1,5 +1,20 @@
 import { body, validationResult } from 'express-validator';
 
+// ── Middleware that checks express-validator results ─────────────────
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      errors: errors.array().map((err) => ({
+        field: err.path,
+        message: err.msg,
+      })),
+    });
+  }
+  next();
+};
+
 // ── Validation rules for expense POST/PUT ─────────────────────────────
 export const validateExpense = [
   body('title')
@@ -37,18 +52,53 @@ export const validateExpense = [
       return true;
     }),
 
-  // ── Middleware that checks results ───────────────────────────────────
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        errors: errors.array().map((err) => ({
-          field: err.path,
-          message: err.msg,
-        })),
-      });
-    }
-    next();
-  },
+  handleValidationErrors,
+];
+
+// ── Validation rules for user Registration ────────────────────────────
+export const validateRegister = [
+  body('name')
+    .trim()
+    .notEmpty()
+    .withMessage('Name is required')
+    .isLength({ max: 50 })
+    .withMessage('Name cannot exceed 50 characters'),
+
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long'),
+
+  body('role')
+    .optional()
+    .isIn(['user', 'admin'])
+    .withMessage('Role must be either user or admin'),
+
+  handleValidationErrors,
+];
+
+// ── Validation rules for user Login ───────────────────────────────────
+export const validateLogin = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required'),
+
+  handleValidationErrors,
 ];

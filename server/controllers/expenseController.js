@@ -1,10 +1,13 @@
 import Expense from '../models/Expense.js';
 
-// @desc    Get all expenses (with optional filtering)
+// @desc    Get all expenses for logged in user (with optional filtering)
 // @route   GET /api/expenses
+// @access  Private
 export const getExpenses = async (req, res, next) => {
   try {
-    const filter = {};
+    const filter = {
+      user: req.user._id,
+    };
 
     // Category filter
     if (req.query.category) {
@@ -37,11 +40,15 @@ export const getExpenses = async (req, res, next) => {
   }
 };
 
-// @desc    Get single expense
+// @desc    Get single expense by ID (scoped to user)
 // @route   GET /api/expenses/:id
+// @access  Private
 export const getExpense = async (req, res, next) => {
   try {
-    const expense = await Expense.findById(req.params.id);
+    const expense = await Expense.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
 
     if (!expense) {
       const error = new Error('Expense not found');
@@ -58,11 +65,15 @@ export const getExpense = async (req, res, next) => {
   }
 };
 
-// @desc    Create expense
+// @desc    Create new expense (scoped to logged in user)
 // @route   POST /api/expenses
+// @access  Private
 export const createExpense = async (req, res, next) => {
   try {
-    const expense = await Expense.create(req.body);
+    const expense = await Expense.create({
+      ...req.body,
+      user: req.user._id,
+    });
 
     res.status(201).json({
       success: true,
@@ -73,14 +84,19 @@ export const createExpense = async (req, res, next) => {
   }
 };
 
-// @desc    Update expense
+// @desc    Update expense (scoped to logged in user)
 // @route   PUT /api/expenses/:id
+// @access  Private
 export const updateExpense = async (req, res, next) => {
   try {
-    const expense = await Expense.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const expense = await Expense.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id },
+      req.body,
+      {
+        returnDocument: 'after',
+        runValidators: true,
+      }
+    );
 
     if (!expense) {
       const error = new Error('Expense not found');
@@ -97,11 +113,15 @@ export const updateExpense = async (req, res, next) => {
   }
 };
 
-// @desc    Delete expense
+// @desc    Delete expense (scoped to logged in user)
 // @route   DELETE /api/expenses/:id
+// @access  Private
 export const deleteExpense = async (req, res, next) => {
   try {
-    const expense = await Expense.findByIdAndDelete(req.params.id);
+    const expense = await Expense.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user._id,
+    });
 
     if (!expense) {
       const error = new Error('Expense not found');

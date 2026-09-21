@@ -25,7 +25,19 @@ const errorHandler = (err, req, res, next) => {
   // Mongoose duplicate key error
   if (err.code === 11000) {
     statusCode = 400;
-    message = 'Duplicate field value entered';
+    const field = Object.keys(err.keyValue || {})[0] || 'field';
+    message = `Duplicate value entered for ${field}. Please use another value.`;
+  }
+
+  // JWT errors
+  if (err.name === 'JsonWebTokenError') {
+    statusCode = 401;
+    message = 'Invalid token. Please log in again.';
+  }
+
+  if (err.name === 'TokenExpiredError') {
+    statusCode = 401;
+    message = 'Token expired. Please log in again.';
   }
 
   // In production, don't leak internal error details for 500s

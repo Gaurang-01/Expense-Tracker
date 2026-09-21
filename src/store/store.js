@@ -1,27 +1,22 @@
 import { configureStore } from '@reduxjs/toolkit';
+import authReducer, { logout } from './slices/authSlice';
 import expensesReducer from './slices/expensesSlice';
 import uiReducer from './slices/uiSlice';
-import { saveExpenses, saveDarkMode } from '../utils/storage';
+import { saveDarkMode } from '../utils/storage';
 
 const store = configureStore({
   reducer: {
+    auth: authReducer,
     expenses: expensesReducer,
     ui: uiReducer,
   },
 });
 
-// ── LocalStorage persistence via store subscription ───────────────────
-let previousExpenses = store.getState().expenses.items;
+// ── Dark mode persistence via store subscription ──────────────────────
 let previousDarkMode = store.getState().ui.darkMode;
 
 store.subscribe(() => {
   const state = store.getState();
-
-  // Only persist when the values actually change
-  if (state.expenses.items !== previousExpenses) {
-    previousExpenses = state.expenses.items;
-    saveExpenses(state.expenses.items);
-  }
 
   if (state.ui.darkMode !== previousDarkMode) {
     previousDarkMode = state.ui.darkMode;
@@ -32,5 +27,12 @@ store.subscribe(() => {
 
 // Sync dark mode class on initial load
 document.documentElement.classList.toggle('dark', store.getState().ui.darkMode);
+
+// Listen for global auth:expired event from API client
+if (typeof window !== 'undefined') {
+  window.addEventListener('auth:expired', () => {
+    store.dispatch(logout());
+  });
+}
 
 export default store;

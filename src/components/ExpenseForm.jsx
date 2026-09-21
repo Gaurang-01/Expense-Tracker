@@ -28,7 +28,7 @@ export default function ExpenseForm() {
         title: editingExpense.title,
         amount: String(editingExpense.amount),
         category: editingExpense.category,
-        date: editingExpense.date,
+        date: editingExpense.date ? editingExpense.date.split('T')[0] : '',
       });
       setErrors({});
     } else {
@@ -57,32 +57,42 @@ export default function ExpenseForm() {
     return Object.keys(newErrors).length === 0;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
 
-    const expense = {
-      id: isEditing ? editingExpense.id : Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+    const expenseData = {
       title: form.title.trim(),
       amount: parseFloat(parseFloat(form.amount).toFixed(2)),
       category: form.category,
       date: form.date,
     };
 
-    setTimeout(() => {
+    try {
       if (isEditing) {
-        dispatch(editExpense(expense));
-        dispatch(addToast(`"${expense.title}" updated!`, 'info'));
+        const id = editingExpense.id || editingExpense._id;
+        const res = await dispatch(editExpense({ id, ...expenseData }));
+        if (editExpense.fulfilled.match(res)) {
+          dispatch(addToast(`"${expenseData.title}" updated!`, 'info'));
+          setForm({ ...emptyForm, date: new Date().toISOString().split('T')[0] });
+        } else {
+          dispatch(addToast(res.payload || 'Failed to update expense', 'error'));
+        }
       } else {
-        dispatch(addExpense(expense));
-        dispatch(addToast(`"${expense.title}" added successfully!`, 'success'));
+        const res = await dispatch(addExpense(expenseData));
+        if (addExpense.fulfilled.match(res)) {
+          dispatch(addToast(`"${expenseData.title}" added successfully!`, 'success'));
+          setForm({ ...emptyForm, date: new Date().toISOString().split('T')[0] });
+        } else {
+          dispatch(addToast(res.payload || 'Failed to add expense', 'error'));
+        }
       }
-      setForm({ ...emptyForm, date: new Date().toISOString().split('T')[0] });
       setErrors({});
+    } finally {
       setIsSubmitting(false);
-    }, 150);
+    }
   }
 
   function handleChange(field, value) {

@@ -7,7 +7,9 @@ import mongoSanitize from 'express-mongo-sanitize';
 import compression from 'compression';
 import morgan from 'morgan';
 import connectDB from './config/db.js';
+import authRoutes from './routes/authRoutes.js';
 import expenseRoutes from './routes/expenseRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
 
 const app = express();
@@ -49,17 +51,32 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false }));
 
-// Sanitize data against NoSQL injection
-app.use(mongoSanitize());
+// Sanitize data against NoSQL injection (compatible with Express 5)
+app.use((req, res, next) => {
+  if (req.body) mongoSanitize.sanitize(req.body);
+  if (req.params) mongoSanitize.sanitize(req.params);
+  if (req.query) {
+    for (const key of Object.keys(req.query)) {
+      if (key.startsWith('$') || key.includes('.')) {
+        delete req.query[key];
+      }
+    }
+  }
+  next();
+});
 
 // Compress responses
 app.use(compression());
 
-// Request logging
-app.use(morgan(isDev ? 'dev' : 'combined'));
+// Request logging (skip in test mode)
+if (process.env.NODE_ENV !== 'test') {
+  app.use(morgan(isDev ? 'dev' : 'combined'));
+}
 
 // ── Routes ───────────────────────────────────────────────────────────
+app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/admin', adminRoutes);
 
 // ── Health check ─────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
@@ -74,14 +91,16 @@ app.use((req, res) => {
 // ── Centralized error handler ────────────────────────────────────────
 app.use(errorHandler);
 
-// ── Start server ─────────────────────────────────────────────────────
-const start = async () => {
-  await connectDB();
-  app.listen(PORT, () => {
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-  });
-};
+// ── Start server only if directly run ─────────────────────────────────
+if (process.env.NODE_ENV !== 'test') {
+  const start = async () => {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+    });
+  };
 
-start();
+  start();
+}
 
 export default app;

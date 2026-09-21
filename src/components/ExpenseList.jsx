@@ -26,7 +26,7 @@ export default function ExpenseList() {
 
       <div className="space-y-2">
         {expenses.map((expense) => (
-          <ExpenseItem key={expense.id} expense={expense} />
+          <ExpenseItem key={expense.id || expense._id} expense={expense} />
         ))}
       </div>
     </div>

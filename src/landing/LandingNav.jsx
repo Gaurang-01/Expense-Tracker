@@ -1,15 +1,23 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { selectIsAuthenticated, selectUser } from '../store/selectors';
+import { logout } from '../store/slices/authSlice';
+import { clearExpenses } from '../store/slices/expensesSlice';
+import { addToast } from '../store/slices/uiSlice';
 
 export default function LandingNav() {
+  const dispatch = useDispatch();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const user = useSelector(selectUser);
+
   const [isScrolled, setIsScrolled] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const { scrollYProgress } = useScroll();
   const progressWidth = useTransform(scrollYProgress, [0, 1], ['0%', '100%']);
 
   useEffect(() => {
-    // Read dark mode from localStorage (decoupled from Redux)
     try {
       const stored = localStorage.getItem('expense-tracker-dark');
       if (stored === 'true') {
@@ -36,6 +44,12 @@ export default function LandingNav() {
     localStorage.setItem('expense-tracker-dark', String(next));
   }
 
+  const handleLogout = () => {
+    dispatch(logout());
+    dispatch(clearExpenses());
+    dispatch(addToast('Logged out successfully', 'info'));
+  };
+
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
@@ -52,16 +66,14 @@ export default function LandingNav() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform">
             <span className="text-white text-lg">💰</span>
           </div>
-          <span className={`text-lg font-bold transition-colors duration-300 ${
-            isScrolled ? 'text-gray-900 dark:text-white' : 'text-gray-900 dark:text-white'
-          }`}>
+          <span className="text-lg font-bold text-gray-900 dark:text-white">
             ExpenseTracker
           </span>
-        </div>
+        </Link>
 
         {/* Right side */}
         <div className="flex items-center gap-3 sm:gap-4">
@@ -80,13 +92,38 @@ export default function LandingNav() {
             </span>
           </button>
 
-          {/* CTA */}
-          <Link
-            to="/app"
-            className="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 active:scale-[0.97]"
-          >
-            Open App
-          </Link>
+          {/* Auth State Links */}
+          {isAuthenticated ? (
+            <div className="flex items-center gap-2.5">
+              <Link
+                to="/app"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-indigo-500/25 transition-all duration-200 active:scale-[0.97]"
+              >
+                Dashboard
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                to="/login"
+                className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/signup"
+                className="px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 active:scale-[0.97]"
+              >
+                Get Started
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </nav>

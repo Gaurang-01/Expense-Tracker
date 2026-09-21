@@ -10,12 +10,18 @@ export default function ExpenseItem({ expense }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const cat = getCategoryConfig(expense.category);
 
-  function handleDelete() {
+  const expenseId = expense._id || expense.id;
+
+  async function handleDelete() {
     setIsDeleting(true);
-    setTimeout(() => {
-      dispatch(deleteExpense(expense.id));
-      dispatch(addToast(`"${expense.title}" deleted`, 'error'));
-    }, 300);
+    const res = await dispatch(deleteExpense(expenseId));
+    if (deleteExpense.fulfilled.match(res)) {
+      dispatch(addToast(`"${expense.title}" deleted`, 'info'));
+    } else {
+      setIsDeleting(false);
+      setShowConfirm(false);
+      dispatch(addToast(res.payload || 'Failed to delete expense', 'error'));
+    }
   }
 
   function handleEdit() {
@@ -23,16 +29,19 @@ export default function ExpenseItem({ expense }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  const formattedDate = new Date(expense.date + 'T00:00:00').toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+  const dateStr = expense.date ? expense.date.split('T')[0] : '';
+  const formattedDate = dateStr
+    ? new Date(dateStr + 'T00:00:00').toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    : '';
 
   return (
     <div
       className={`group relative bg-white dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-700/50 p-4 transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-black/20 hover:-translate-y-0.5 ${
-        isDeleting ? 'animate-fade-out-down opacity-0' : 'animate-fade-in-up'
+        isDeleting ? 'animate-fade-out-down opacity-0 pointer-events-none' : 'animate-fade-in-up'
       }`}
     >
       <div className="flex items-start gap-3 sm:gap-4">
@@ -56,15 +65,17 @@ export default function ExpenseItem({ expense }) {
                 >
                   {expense.category}
                 </span>
-                <span className="text-xs text-gray-400 dark:text-gray-500">
-                  {formattedDate}
-                </span>
+                {formattedDate && (
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                    {formattedDate}
+                  </span>
+                )}
               </div>
             </div>
 
             {/* Amount */}
             <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white tabular-nums flex-shrink-0">
-              ₹{expense.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              ₹{(Number(expense.amount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </p>
           </div>
         </div>

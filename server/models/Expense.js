@@ -34,6 +34,11 @@ const expenseSchema = new mongoose.Schema(
         message: 'Date cannot be in the future',
       },
     },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'User is required'],
+    },
   },
   {
     timestamps: true, // adds createdAt and updatedAt

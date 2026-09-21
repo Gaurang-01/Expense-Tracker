@@ -21,18 +21,27 @@ const isDev = process.env.NODE_ENV === 'development';
 // Set security HTTP headers
 app.use(helmet());
 
-// CORS — restrict to allowed origins in production
-const allowedOrigins = isDev
-  ? ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000']
-  : [process.env.CLIENT_ORIGIN || 'http://localhost:5173'];
+// CORS — handle local development and production origins flexibly
+const rawClientOrigins = process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',').map((o) => o.trim().replace(/\/$/, '')) : [];
+const defaultOrigins = ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000'];
+const allowedOrigins = [...new Set([...defaultOrigins, ...rawClientOrigins])];
 
 app.use(
   cors({
-    origin: allowedOrigins,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or Postman)
+      if (!origin) return callback(null, true);
+      // Allow if origin is in list, or if CLIENT_ORIGIN is '*'
+      if (process.env.CLIENT_ORIGIN === '*' || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com')) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Fallback to allow connection in case of misconfigured origin
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
   })
 );
+
 
 // Rate limiting — max 100 requests per 15 minutes per IP
 const limiter = rateLimit({

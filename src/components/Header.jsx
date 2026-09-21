@@ -87,6 +87,18 @@ export default function Header() {
             <span className="hidden sm:inline">Analytics</span>
           </Link>
 
+          {/* Admin Panel Link (Only visible to admin role) */}
+          {user?.role === 'admin' && (
+            <Link
+              to="/app/admin"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/50 border border-purple-200/50 dark:border-purple-800/40 text-purple-600 dark:text-purple-300 text-xs font-semibold transition-colors duration-200"
+              title="Admin Panel"
+            >
+              <span className="text-xs">🛡️</span>
+              <span className="hidden sm:inline">Admin Panel</span>
+            </Link>
+          )}
+
           {/* Dark Mode Toggle */}
           <button
             id="dark-mode-toggle"

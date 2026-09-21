@@ -8,6 +8,7 @@ const LandingPage = lazy(() => import('./landing/LandingPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const SignupPage = lazy(() => import('./pages/SignupPage'));
 const AnalyticsDashboard = lazy(() => import('./pages/AnalyticsDashboard'));
+const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 import App from './App';
 
 export default function AppRouter() {
@@ -48,6 +49,14 @@ export default function AppRouter() {
           element={
             <ProtectedRoute>
               <AnalyticsDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/admin"
+          element={
+            <ProtectedRoute>
+              <AdminPanel />
             </ProtectedRoute>
           }
         />

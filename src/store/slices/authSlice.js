@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../../utils/api';
+import { connectSocket, disconnectSocket } from '../../lib/socket';
 
 // ── Async Thunks ───────────────────────────────────────────────────────
 
@@ -11,6 +12,7 @@ export const registerUser = createAsyncThunk(
       const response = await api.post('/auth/register', { name, email, password });
       if (response.token) {
         localStorage.setItem('token', response.token);
+        connectSocket();
       }
       return {
         user: response.data,
@@ -30,6 +32,7 @@ export const loginUser = createAsyncThunk(
       const response = await api.post('/auth/login', { email, password });
       if (response.token) {
         localStorage.setItem('token', response.token);
+        connectSocket();
       }
       return {
         user: response.data,
@@ -51,9 +54,11 @@ export const loadUser = createAsyncThunk(
     }
     try {
       const response = await api.get('/auth/me');
+      connectSocket();
       return response.data;
     } catch (err) {
       localStorage.removeItem('token');
+      disconnectSocket();
       return rejectWithValue(err.message || 'Session expired');
     }
   }
@@ -79,6 +84,7 @@ const authSlice = createSlice({
     },
     logout(state) {
       localStorage.removeItem('token');
+      disconnectSocket();
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;

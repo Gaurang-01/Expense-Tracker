@@ -1,4 +1,6 @@
 import Expense from '../models/Expense.js';
+import { getIO } from '../socket.js';
+import { emitAnalyticsUpdated } from './analyticsController.js';
 
 // @desc    Get all expenses for logged in user (with optional filtering)
 // @route   GET /api/expenses
@@ -75,6 +77,18 @@ export const createExpense = async (req, res, next) => {
       user: req.user._id,
     });
 
+    // Real-time broadcast to user's personal room
+    try {
+      const io = getIO();
+      if (io) {
+        io.to(req.user._id.toString()).emit('expense:created', expense);
+      }
+      // Recompute and emit updated analytics
+      emitAnalyticsUpdated(req.user._id);
+    } catch (socketErr) {
+      console.warn('[Socket.IO] Emit expense:created error:', socketErr.message);
+    }
+
     res.status(201).json({
       success: true,
       data: expense,
@@ -104,6 +118,18 @@ export const updateExpense = async (req, res, next) => {
       throw error;
     }
 
+    // Real-time broadcast to user's personal room
+    try {
+      const io = getIO();
+      if (io) {
+        io.to(req.user._id.toString()).emit('expense:updated', expense);
+      }
+      // Recompute and emit updated analytics
+      emitAnalyticsUpdated(req.user._id);
+    } catch (socketErr) {
+      console.warn('[Socket.IO] Emit expense:updated error:', socketErr.message);
+    }
+
     res.status(200).json({
       success: true,
       data: expense,
@@ -127,6 +153,21 @@ export const deleteExpense = async (req, res, next) => {
       const error = new Error('Expense not found');
       error.statusCode = 404;
       throw error;
+    }
+
+    // Real-time broadcast to user's personal room
+    try {
+      const io = getIO();
+      if (io) {
+        io.to(req.user._id.toString()).emit('expense:deleted', {
+          id: req.params.id,
+          _id: req.params.id,
+        });
+      }
+      // Recompute and emit updated analytics
+      emitAnalyticsUpdated(req.user._id);
+    } catch (socketErr) {
+      console.warn('[Socket.IO] Emit expense:deleted error:', socketErr.message);
     }
 
     res.status(200).json({

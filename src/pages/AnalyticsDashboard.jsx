@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { selectDarkMode } from '../store/selectors';
 import { getCategoryConfig, CATEGORIES } from '../utils/categories';
 import api from '../utils/api';
+import { socket } from '../lib/socket';
 import {
   ResponsiveContainer,
   LineChart,
@@ -174,6 +175,33 @@ export default function AnalyticsDashboard() {
   useEffect(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);
+
+  // ── Real-time Analytics synchronization ─────────────────────────────
+  useEffect(() => {
+    const handleWindowAnalyticsEvent = (e) => {
+      if (e.detail) {
+        setData(e.detail);
+        setLoading(false);
+        setError(null);
+      }
+    };
+
+    const handleSocketAnalytics = (updatedData) => {
+      if (updatedData) {
+        setData(updatedData);
+        setLoading(false);
+        setError(null);
+      }
+    };
+
+    window.addEventListener('socket:analytics:updated', handleWindowAnalyticsEvent);
+    socket.on('analytics:updated', handleSocketAnalytics);
+
+    return () => {
+      window.removeEventListener('socket:analytics:updated', handleWindowAnalyticsEvent);
+      socket.off('analytics:updated', handleSocketAnalytics);
+    };
+  }, []);
 
   // ── Computed: Natural Language Summary ───────────────────────────────
   const nlSummary = (() => {

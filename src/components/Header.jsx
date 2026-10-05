@@ -5,6 +5,7 @@ import { selectTotalBalance, selectDarkMode, selectUser } from '../store/selecto
 import { toggleDarkMode, addToast } from '../store/slices/uiSlice';
 import { logout } from '../store/slices/authSlice';
 import { clearExpenses } from '../store/slices/expensesSlice';
+import { socket } from '../lib/socket';
 
 export default function Header() {
   const dispatch = useDispatch();
@@ -15,11 +16,31 @@ export default function Header() {
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isSocketConnected, setIsSocketConnected] = useState(socket.connected);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Track real-time socket connection events
+  useEffect(() => {
+    const onConnect = () => setIsSocketConnected(true);
+    const onDisconnect = () => setIsSocketConnected(false);
+    const onConnectError = () => setIsSocketConnected(false);
+
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+    socket.on('connect_error', onConnectError);
+
+    setIsSocketConnected(socket.connected);
+
+    return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+      socket.off('connect_error', onConnectError);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -48,20 +69,54 @@ export default function Header() {
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
-        {/* Logo & Title */}
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform">
-            <span className="text-white text-lg">💰</span>
-          </div>
-          <div>
-            <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white leading-tight">
-              Expense Tracker
-            </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
-              MongoDB Scoped Sync
-            </p>
-          </div>
-        </Link>
+        {/* Logo & Title & Real-time Live Connection Dot */}
+        <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform">
+              <span className="text-white text-lg">💰</span>
+            </div>
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                Expense Tracker
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
+                MongoDB Scoped Sync
+              </p>
+            </div>
+          </Link>
+
+          {/* Live Socket.IO connection status indicator */}
+          {user && (
+            <div
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all duration-300 ${
+                isSocketConnected
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/40'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700'
+              }`}
+              title={
+                isSocketConnected
+                  ? 'Real-Time Sync Connected (Live updates enabled)'
+                  : 'Real-Time Sync Disconnected (Reconnecting...)'
+              }
+            >
+              <span className="relative flex h-2 w-2">
+                {isSocketConnected && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                )}
+                <span
+                  className={`relative inline-flex rounded-full h-2 w-2 ${
+                    isSocketConnected
+                      ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50'
+                      : 'bg-gray-400 dark:bg-gray-600'
+                  }`}
+                ></span>
+              </span>
+              <span className="hidden md:inline">
+                {isSocketConnected ? 'Live' : 'Offline'}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Right Section: Balance + Dark Mode + User Info + Logout */}
         <div className="flex items-center gap-3 sm:gap-5">

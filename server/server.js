@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import http from 'http';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -11,8 +12,11 @@ import authRoutes from './routes/authRoutes.js';
 import expenseRoutes from './routes/expenseRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
+import { initSocket } from './socket.js';
 
 const app = express();
+const httpServer = http.createServer(app);
+
 const PORT = process.env.PORT || 5000;
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -26,22 +30,28 @@ const rawClientOrigins = process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.s
 const defaultOrigins = ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000'];
 const allowedOrigins = [...new Set([...defaultOrigins, ...rawClientOrigins])];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, or Postman)
-      if (!origin) return callback(null, true);
-      // Allow if origin is in list, or if CLIENT_ORIGIN is '*'
-      if (process.env.CLIENT_ORIGIN === '*' || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com')) {
-        return callback(null, true);
-      }
-      return callback(null, true); // Fallback to allow connection in case of misconfigured origin
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, or Postman)
+    if (!origin) return callback(null, true);
+    // Allow if origin is in list, or if CLIENT_ORIGIN is '*'
+    if (process.env.CLIENT_ORIGIN === '*' || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com')) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Fallback to allow connection in case of misconfigured origin
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+};
 
+app.use(cors(corsOptions));
+
+// ── Initialize Socket.IO with matching CORS config ───────────────────
+initSocket(httpServer, {
+  origin: corsOptions.origin,
+  methods: ['GET', 'POST'],
+  credentials: true,
+});
 
 // Rate limiting — max 100 requests per 15 minutes per IP
 const limiter = rateLimit({
@@ -104,7 +114,7 @@ app.use(errorHandler);
 if (process.env.NODE_ENV !== 'test') {
   const start = async () => {
     await connectDB();
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
     });
   };
@@ -112,4 +122,5 @@ if (process.env.NODE_ENV !== 'test') {
   start();
 }
 
+export { httpServer, app };
 export default app;

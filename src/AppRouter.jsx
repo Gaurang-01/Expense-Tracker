@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { loadUser } from './store/slices/authSlice';
 import ProtectedRoute from './components/ProtectedRoute';
+import useRealtimeSync from './hooks/useRealtimeSync';
 
 const LandingPage = lazy(() => import('./landing/LandingPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -13,6 +14,9 @@ import App from './App';
 
 export default function AppRouter() {
   const dispatch = useDispatch();
+
+  // Attach global authenticated Socket.IO listeners
+  useRealtimeSync();
 
   useEffect(() => {
     // Attempt session restore on initial load

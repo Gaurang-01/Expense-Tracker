@@ -96,6 +96,48 @@ const expensesSlice = createSlice({
       state.editingExpense = null;
       state.error = null;
     },
+    // ── Real-Time Socket.IO Reducers ──────────────────────────────────
+    socketExpenseCreated(state, action) {
+      if (!action.payload) return;
+      const raw = action.payload;
+      const targetId = raw._id || raw.id;
+      // Guard against double-insert: if already present in state, ignore
+      const exists = state.items.some((item) => (item._id && item._id === targetId) || (item.id && item.id === targetId));
+      if (!exists) {
+        const newItem = {
+          ...raw,
+          id: targetId,
+          date: raw.date ? (typeof raw.date === 'string' ? raw.date.split('T')[0] : raw.date) : raw.date,
+        };
+        state.items.unshift(newItem);
+      }
+    },
+    socketExpenseUpdated(state, action) {
+      if (!action.payload) return;
+      const raw = action.payload;
+      const targetId = raw._id || raw.id;
+      const updatedItem = {
+        ...raw,
+        id: targetId,
+        date: raw.date ? (typeof raw.date === 'string' ? raw.date.split('T')[0] : raw.date) : raw.date,
+      };
+      const index = state.items.findIndex(
+        (item) => (item._id && item._id === targetId) || (item.id && item.id === targetId)
+      );
+      if (index !== -1) {
+        state.items[index] = updatedItem;
+      } else {
+        // If not found, add it
+        state.items.unshift(updatedItem);
+      }
+    },
+    socketExpenseDeleted(state, action) {
+      const targetId = typeof action.payload === 'object' ? (action.payload._id || action.payload.id) : action.payload;
+      if (!targetId) return;
+      state.items = state.items.filter(
+        (item) => item.id !== targetId && item._id !== targetId
+      );
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -110,7 +152,7 @@ const expensesSlice = createSlice({
         state.items = (action.payload || []).map((item) => ({
           ...item,
           id: item._id || item.id,
-          date: item.date ? item.date.split('T')[0] : item.date,
+          date: item.date ? (typeof item.date === 'string' ? item.date.split('T')[0] : item.date) : item.date,
         }));
       })
       .addCase(fetchExpenses.rejected, (state, action) => {
@@ -124,12 +166,16 @@ const expensesSlice = createSlice({
       })
       .addCase(addExpense.fulfilled, (state, action) => {
         state.loading = false;
-        const newItem = {
-          ...action.payload,
-          id: action.payload._id || action.payload.id,
-          date: action.payload.date ? action.payload.date.split('T')[0] : action.payload.date,
-        };
-        state.items.unshift(newItem);
+        const targetId = action.payload._id || action.payload.id;
+        const exists = state.items.some((item) => (item._id && item._id === targetId) || (item.id && item.id === targetId));
+        if (!exists) {
+          const newItem = {
+            ...action.payload,
+            id: targetId,
+            date: action.payload.date ? (typeof action.payload.date === 'string' ? action.payload.date.split('T')[0] : action.payload.date) : action.payload.date,
+          };
+          state.items.unshift(newItem);
+        }
       })
       .addCase(addExpense.rejected, (state, action) => {
         state.loading = false;
@@ -142,12 +188,13 @@ const expensesSlice = createSlice({
       })
       .addCase(editExpense.fulfilled, (state, action) => {
         state.loading = false;
+        const targetId = action.payload._id || action.payload.id;
         const updatedItem = {
           ...action.payload,
-          id: action.payload._id || action.payload.id,
-          date: action.payload.date ? action.payload.date.split('T')[0] : action.payload.date,
+          id: targetId,
+          date: action.payload.date ? (typeof action.payload.date === 'string' ? action.payload.date.split('T')[0] : action.payload.date) : action.payload.date,
         };
-        const index = state.items.findIndex((e) => e.id === updatedItem.id || e._id === updatedItem.id);
+        const index = state.items.findIndex((e) => e.id === targetId || e._id === targetId);
         if (index !== -1) {
           state.items[index] = updatedItem;
         }
@@ -160,8 +207,9 @@ const expensesSlice = createSlice({
 
       // ── Delete Expense ───────────────────────────────────────────────
       .addCase(deleteExpense.fulfilled, (state, action) => {
+        const targetId = action.payload;
         state.items = state.items.filter(
-          (e) => e.id !== action.payload && e._id !== action.payload
+          (e) => e.id !== targetId && e._id !== targetId
         );
       });
   },
@@ -175,6 +223,9 @@ export const {
   clearFilters,
   setAllFilters,
   clearExpenses,
+  socketExpenseCreated,
+  socketExpenseUpdated,
+  socketExpenseDeleted,
 } = expensesSlice.actions;
 
 export default expensesSlice.reducer;

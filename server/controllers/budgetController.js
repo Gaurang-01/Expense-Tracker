@@ -82,7 +82,7 @@ export const deleteBudget = async (req, res, next) => {
 
 /**
  * Check all budgets for a user after an expense is created/updated/deleted.
- * Fires budget:alert socket events and persisted notifications at 85% and 100%.
+ * Persists and broadcasts notification:new events at 85% and 100%.
  */
 export async function checkBudgetAlerts(userId) {
   try {

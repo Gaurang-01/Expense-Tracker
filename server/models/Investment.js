@@ -17,7 +17,7 @@ const investmentSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Type is required'],
       enum: {
-        values: ['Stocks', 'Mutual Funds', 'Crypto', 'Fixed Deposit', 'Gold', 'Real Estate', 'Other'],
+        values: ['Stock', 'Stocks', 'Mutual Fund', 'Mutual Funds', 'Crypto', 'Bond', 'Fixed Deposit', 'Gold', 'Real Estate', 'Other'],
         message: '{VALUE} is not a valid investment type',
       },
     },

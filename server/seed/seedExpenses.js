@@ -138,8 +138,9 @@ async function seed() {
   // Determine target user
   let userId;
   const cliArg = process.argv.find((a) => a.startsWith('--userId='));
-  if (cliArg) {
-    userId = cliArg.split('=')[1];
+  const requestedUserId = cliArg?.slice('--userId='.length) || process.env.SEED_USER_ID;
+  if (requestedUserId) {
+    userId = requestedUserId;
   } else {
     // Find first user in DB
     const user = await User.findOne().sort({ createdAt: 1 });
@@ -268,12 +269,14 @@ async function seed() {
 
   // ── Seed Budgets ─────────────────────────────────────────────────────
   await Budget.deleteMany({ user: userId });
+  const budgetMonth = now.getMonth() + 1;
+  const budgetYear = now.getFullYear();
   const sampleBudgets = [
-    { category: 'Food', limit: 12000, user: userId },
-    { category: 'Travel', limit: 6000, user: userId },
-    { category: 'Shopping', limit: 8000, user: userId },
-    { category: 'Bills', limit: 10000, user: userId },
-    { category: 'Entertainment', limit: 5000, user: userId },
+    { category: 'Food', limit: 12000, user: userId, month: budgetMonth, year: budgetYear },
+    { category: 'Travel', limit: 6000, user: userId, month: budgetMonth, year: budgetYear },
+    { category: 'Shopping', limit: 8000, user: userId, month: budgetMonth, year: budgetYear },
+    { category: 'Bills', limit: 10000, user: userId, month: budgetMonth, year: budgetYear },
+    { category: 'Entertainment', limit: 5000, user: userId, month: budgetMonth, year: budgetYear },
   ];
   await Budget.insertMany(sampleBudgets);
   console.log(`   📊 Seeded ${sampleBudgets.length} category budgets`);
@@ -361,7 +364,8 @@ async function seed() {
       type: 'Mutual Fund',
       investedAmount: 50000,
       currentValue: 58400,
-      notes: 'Monthly SIP via Zerodha Coin',
+      purchaseDate: new Date(now.getFullYear() - 2, now.getMonth(), 1),
+      note: 'Monthly SIP via Zerodha Coin',
     },
     {
       user: userId,
@@ -369,7 +373,8 @@ async function seed() {
       type: 'Stock',
       investedAmount: 30000,
       currentValue: 36200,
-      notes: 'Long-term equity holding',
+      purchaseDate: new Date(now.getFullYear() - 1, now.getMonth(), 1),
+      note: 'Long-term equity holding',
     },
     {
       user: userId,
@@ -377,7 +382,8 @@ async function seed() {
       type: 'Gold',
       investedAmount: 25000,
       currentValue: 27500,
-      notes: 'RBI gold tranche',
+      purchaseDate: new Date(now.getFullYear() - 3, now.getMonth(), 1),
+      note: 'RBI gold tranche',
     },
     {
       user: userId,
@@ -385,7 +391,8 @@ async function seed() {
       type: 'Crypto',
       investedAmount: 15000,
       currentValue: 18900,
-      notes: 'Cold storage wallet',
+      purchaseDate: new Date(now.getFullYear() - 1, now.getMonth() - 6, 1),
+      note: 'Cold storage wallet',
     },
   ];
   await Investment.insertMany(sampleInvestments);
@@ -400,7 +407,7 @@ async function seed() {
     members: [userId],
     expenses: [
       {
-        description: 'Monthly Wi-Fi & Electricity',
+        title: 'Monthly Wi-Fi & Electricity',
         amount: 2400,
         paidBy: userId,
         category: 'Bills',
@@ -435,7 +442,7 @@ async function seed() {
       user: userId,
       title: 'Goal Milestone Achieved!',
       message: 'Congratulations! You reached 100% of your MacBook Pro M3 savings target.',
-      type: 'goal_reached',
+      type: 'goal_milestone',
       isRead: true,
     },
   ];

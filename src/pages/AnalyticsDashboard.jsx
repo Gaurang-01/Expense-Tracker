@@ -157,6 +157,9 @@ export default function AnalyticsDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [alertDismissed, setAlertDismissed] = useState(false);
+  const [aiInsights, setAiInsights] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
 
   // Fetch analytics data
   const fetchAnalytics = useCallback(async () => {
@@ -171,6 +174,19 @@ export default function AnalyticsDashboard() {
       setLoading(false);
     }
   }, []);
+
+  const generateAiInsights = async () => {
+    setAiLoading(true);
+    setAiError('');
+    try {
+      const response = await api.post('/expenses/analytics/ai-insights', {});
+      setAiInsights(response.data);
+    } catch (err) {
+      setAiError(err.message || 'Could not generate the AI spending review.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchAnalytics();
@@ -431,6 +447,61 @@ export default function AnalyticsDashboard() {
             </p>
           </div>
         )}
+
+        {/* ── AI Spending Review ──────────────────────────────────────── */}
+        <section className="rounded-2xl border border-violet-200 dark:border-violet-800/50 bg-gradient-to-br from-white via-violet-50/70 to-indigo-50 dark:from-gray-900 dark:via-violet-950/20 dark:to-indigo-950/20 p-5 sm:p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">Personalized report</p>
+              <h2 className="mt-1 text-lg font-bold text-gray-900 dark:text-white">AI Spending Review</h2>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Evidence-based patterns and practical ways to improve your monthly cash flow.</p>
+            </div>
+            <button
+              type="button"
+              onClick={generateAiInsights}
+              disabled={aiLoading}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-600/20 transition hover:bg-violet-700 disabled:cursor-wait disabled:opacity-60"
+            >
+              {aiLoading ? <><span className="animate-spin">◌</span> Reviewing…</> : <>{aiInsights ? '↻ Refresh review' : '✦ Generate review'}</>}
+            </button>
+          </div>
+
+          {aiError && <p role="alert" className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">{aiError}</p>}
+
+          {aiInsights ? (
+            <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1fr]">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{aiInsights.headline}</h3>
+                <ul className="mt-3 space-y-2">
+                  {aiInsights.observations.map((item, index) => (
+                    <li key={`${index}-${item}`} className="flex gap-2 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                      <span className="mt-0.5 text-violet-500">•</span><span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Suggested actions</h3>
+                <div className="mt-2 space-y-2">
+                  {aiInsights.recommendations.map((item, index) => (
+                    <article key={`${index}-${item.title}`} className="rounded-xl border border-violet-100 bg-white/80 p-3 dark:border-violet-900/40 dark:bg-gray-900/70">
+                      <div className="flex items-start justify-between gap-3">
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{item.title}</h4>
+                      </div>
+                      <p className="mt-1 text-xs leading-relaxed text-gray-600 dark:text-gray-400">{item.detail}</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 lg:col-span-2">Based on aggregated expense totals and categories for {aiInsights.period}. Transaction titles and personal identifiers are not sent for analysis.</p>
+            </div>
+          ) : !aiError && (
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-dashed border-violet-200 px-4 py-3 text-xs text-gray-500 dark:border-violet-800/50 dark:text-gray-400">
+              <span className="text-lg">✦</span>
+              <span>Generate a private spending review with observations, category trends, and specific next steps. Your transaction titles are excluded.</span>
+            </div>
+          )}
+        </section>
 
         {/* ── Summary Cards ───────────────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

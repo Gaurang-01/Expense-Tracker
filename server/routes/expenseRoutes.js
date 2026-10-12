@@ -7,6 +7,7 @@ import {
   deleteExpense,
 } from '../controllers/expenseController.js';
 import { getAnalytics } from '../controllers/analyticsController.js';
+import { getAiAnalyticsInsights } from '../controllers/analyticsInsightsController.js';
 import { protect } from '../middleware/auth.js';
 import { validateExpense } from '../middleware/validate.js';
 
@@ -21,6 +22,7 @@ router.route('/')
 
 // Analytics — must be before /:id to avoid treating "analytics" as an ObjectId
 router.get('/analytics', getAnalytics);
+router.post('/analytics/ai-insights', getAiAnalyticsInsights);
 
 router.route('/:id')
   .get(getExpense)

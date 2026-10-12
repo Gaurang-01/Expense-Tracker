@@ -28,14 +28,14 @@ export default function AdminPanel() {
   const [userToDelete, setUserToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   // Protect client side: only admin role can access
   if (currentUser && currentUser.role !== 'admin') {
     return <Navigate to="/app" replace />;
   }
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
 
   const fetchUsers = async () => {
     try {

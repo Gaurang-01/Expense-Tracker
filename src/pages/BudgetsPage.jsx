@@ -187,7 +187,7 @@ export default function BudgetsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {budgets.map((b) => {
               const catObj = CATEGORIES.find((c) => c.name === b.category) || { icon: '🏷️' };
-              const pct = b.percentage || 0;
+              const pct = Math.round((Number(b.spent || 0) / Math.max(Number(b.limit || 0), 1)) * 100);
               const barColor = pct >= 100 ? 'bg-rose-500' : pct >= 70 ? 'bg-amber-500' : 'bg-emerald-500';
 
               return (

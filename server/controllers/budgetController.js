@@ -28,7 +28,7 @@ export const getBudgets = async (req, res, next) => {
     const enriched = await Promise.all(
       budgets.map(async (b) => {
         const spent = await getSpentForBudget(req.user._id, b.category, b.month, b.year);
-        return { ...b.toObject(), spent };
+        return { ...b.toObject(), spent, percentage: Math.round((spent / b.limit) * 100), remaining: b.limit - spent };
       })
     );
 

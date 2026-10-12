@@ -33,13 +33,13 @@ export default function BellIcon() {
     switch (type) {
       case 'budget_alert':
         return '⚠️';
-      case 'goal_reached':
+      case 'goal_milestone':
         return '🎯';
       case 'recurring_processed':
         return '🔄';
       case 'group_activity':
         return '👥';
-      case 'anomaly':
+      case 'unusual_expense':
         return '🚨';
       default:
         return 'ℹ️';
@@ -104,9 +104,9 @@ export default function BellIcon() {
                 notifications.slice(0, 6).map((n) => (
                   <div
                     key={n._id}
-                    onClick={() => !n.read && handleMarkRead(n._id)}
+                    onClick={() => !n.isRead && handleMarkRead(n._id)}
                     className={`p-3.5 flex items-start gap-3 transition-colors cursor-pointer ${
-                      n.read
+                      n.isRead
                         ? 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                         : 'bg-indigo-50/50 dark:bg-indigo-950/20 hover:bg-indigo-50 dark:hover:bg-indigo-950/40'
                     }`}
@@ -114,7 +114,7 @@ export default function BellIcon() {
                     <span className="text-xl flex-shrink-0 mt-0.5">{getTypeIcon(n.type)}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className={`text-xs font-semibold truncate ${n.read ? 'text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-white'}`}>
+                        <p className={`text-xs font-semibold truncate ${n.isRead ? 'text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-white'}`}>
                           {n.title}
                         </p>
                         <span className="text-[10px] text-gray-400 flex-shrink-0">
@@ -125,7 +125,7 @@ export default function BellIcon() {
                         {n.message}
                       </p>
                     </div>
-                    {!n.read && (
+                    {!n.isRead && (
                       <span className="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0 mt-1.5" />
                     )}
                   </div>

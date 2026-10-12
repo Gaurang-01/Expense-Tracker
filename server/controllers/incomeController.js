@@ -7,7 +7,7 @@ export const getIncomes = async (req, res, next) => {
   try {
     const filter = { user: req.user._id };
 
-    if (req.query.category) filter.category = req.query.category;
+    if (req.query.source) filter.source = req.query.source;
 
     if (req.query.dateFrom || req.query.dateTo) {
       filter.date = {};

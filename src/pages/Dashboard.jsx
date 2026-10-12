@@ -217,7 +217,7 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-3">
                 {budgets.slice(0, 4).map((b) => {
-                  const pct = b.percentage || 0;
+                  const pct = Math.round((Number(b.spent || 0) / Math.max(Number(b.limit || 0), 1)) * 100);
                   const barColor = pct >= 100 ? 'bg-rose-500' : pct >= 70 ? 'bg-amber-500' : 'bg-emerald-500';
 
                   return (

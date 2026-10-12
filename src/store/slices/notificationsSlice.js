@@ -74,7 +74,7 @@ const notificationsSlice = createSlice({
       const exists = state.items.some((n) => n._id === notif._id);
       if (!exists) {
         state.items.unshift(notif);
-        if (!notif.read) {
+        if (!notif.isRead) {
           state.unreadCount += 1;
         }
       }
@@ -98,7 +98,7 @@ const notificationsSlice = createSlice({
       .addCase(markNotificationRead.fulfilled, (state, action) => {
         const idx = state.items.findIndex((n) => n._id === action.payload._id);
         if (idx !== -1) {
-          if (!state.items[idx].read) {
+          if (!state.items[idx].isRead) {
             state.unreadCount = Math.max(0, state.unreadCount - 1);
           }
           state.items[idx] = action.payload;
@@ -106,13 +106,13 @@ const notificationsSlice = createSlice({
       })
       .addCase(markAllNotificationsRead.fulfilled, (state) => {
         state.items.forEach((n) => {
-          n.read = true;
+          n.isRead = true;
         });
         state.unreadCount = 0;
       })
       .addCase(deleteNotification.fulfilled, (state, action) => {
         const deleted = state.items.find((n) => n._id === action.payload);
-        if (deleted && !deleted.read) {
+        if (deleted && !deleted.isRead) {
           state.unreadCount = Math.max(0, state.unreadCount - 1);
         }
         state.items = state.items.filter((n) => n._id !== action.payload);

@@ -334,7 +334,7 @@ async function seed() {
       user: userId,
       title: 'Gym & Fitness Membership',
       amount: 2500,
-      category: 'Health',
+      category: 'Other',
       frequency: 'monthly',
       nextDue: new Date(now.getFullYear(), now.getMonth(), 25),
       isActive: true,
@@ -422,21 +422,21 @@ async function seed() {
       title: 'Welcome to FinanceFlow!',
       message: 'Your personal finance manager is now equipped with budgets, goals, investments, and live sync.',
       type: 'info',
-      read: false,
+      isRead: false,
     },
     {
       user: userId,
       title: 'Budget Alert: Food at 85%',
       message: 'You have spent 85% of your ₹12,000 monthly Food limit.',
       type: 'budget_alert',
-      read: false,
+      isRead: false,
     },
     {
       user: userId,
       title: 'Goal Milestone Achieved!',
       message: 'Congratulations! You reached 100% of your MacBook Pro M3 savings target.',
       type: 'goal_reached',
-      read: true,
+      isRead: true,
     },
   ];
   await Notification.insertMany(sampleNotifs);

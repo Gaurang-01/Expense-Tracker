@@ -14,15 +14,20 @@ export const getInvestments = async (req, res, next) => {
     const gainLossPercent = totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0;
 
     // Allocation by type
-    const allocation = {};
+    const allocationTotals = {};
     for (const inv of investments) {
-      allocation[inv.type] = (allocation[inv.type] || 0) + inv.currentValue;
+      allocationTotals[inv.type] = (allocationTotals[inv.type] || 0) + inv.currentValue;
     }
+    const allocation = Object.entries(allocationTotals).map(([type, currentValue]) => ({
+      type,
+      currentValue,
+      percentage: totalCurrent > 0 ? Math.round((currentValue / totalCurrent) * 1000) / 10 : 0,
+    }));
 
     res.status(200).json({
       success: true,
       count: investments.length,
-      summary: { totalInvested, totalCurrent, totalGainLoss, gainLossPercent },
+      summary: { totalInvested, totalCurrent, totalGainLoss, percentageGainLoss: gainLossPercent, allocation },
       allocation,
       data: investments,
     });

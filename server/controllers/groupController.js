@@ -37,7 +37,11 @@ function computeBalances(group) {
     // Each split member is debited their share
     for (const split of expense.splits) {
       const memberId = split.member.toString();
-      if (net[memberId] !== undefined) net[memberId] -= split.amount;
+      if (split.settled) {
+        if (net[paidById] !== undefined) net[paidById] -= split.amount;
+      } else if (net[memberId] !== undefined) {
+        net[memberId] -= split.amount;
+      }
     }
   }
 
@@ -181,11 +185,26 @@ export const addGroupExpense = async (req, res, next) => {
 
     let splits = [];
     if (splitType === 'custom' && customSplits?.length) {
+      const memberIds = new Set(group.members.map((m) => m._id.toString()));
+      const uniqueMembers = new Set(customSplits.map((s) => String(s.member)));
+      const splitTotal = customSplits.reduce((sum, s) => sum + Number(s.amount || 0), 0);
+      if (customSplits.some((s) => !memberIds.has(String(s.member)) || !Number.isFinite(Number(s.amount)) || Number(s.amount) < 0)
+        || uniqueMembers.size !== customSplits.length
+        || Math.abs(splitTotal - Number(amount)) > 0.01) {
+        const error = new Error('Custom splits must assign each group member at most once and total the expense amount');
+        error.statusCode = 400;
+        throw error;
+      }
       splits = customSplits.map((s) => ({ member: s.member, amount: s.amount, settled: false }));
     } else {
       // Equal split among all members
-      const share = Math.round((amount / group.members.length) * 100) / 100;
-      splits = group.members.map((m) => ({ member: m._id, amount: share, settled: false }));
+      const cents = Math.round(Number(amount) * 100);
+      const shareCents = Math.floor(cents / group.members.length);
+      let remainder = cents - shareCents * group.members.length;
+      splits = group.members.map((m) => {
+        const share = shareCents + (remainder-- > 0 ? 1 : 0);
+        return { member: m._id, amount: share / 100, settled: false };
+      });
     }
 
     group.expenses.push({
@@ -207,6 +226,7 @@ export const addGroupExpense = async (req, res, next) => {
     obj.balances = computeBalances(populated);
 
     emitToGroup(group._id, 'group:expense:added', obj);
+    emitToGroup(group._id, 'group:updated', obj);
 
     res.status(201).json({ success: true, data: obj });
   } catch (error) {

@@ -2,6 +2,25 @@ import Expense from '../models/Expense.js';
 import { getIO } from '../socket.js';
 import { emitAnalyticsUpdated } from './analyticsController.js';
 import { checkBudgetAlerts } from './budgetController.js';
+import { createAndDeliverNotification } from '../utils/notificationHelper.js';
+
+async function notifyIfUnusual(expense, userId) {
+  const sample = await Expense.aggregate([
+    { $match: { user: userId, category: expense.category, _id: { $ne: expense._id }, date: { $gte: new Date(Date.now() - 90 * 86400000) } } },
+    { $group: { _id: null, average: { $avg: '$amount' }, count: { $sum: 1 } } },
+  ]);
+  const baseline = sample[0];
+  if (baseline?.count >= 5 && expense.amount >= Math.max(5000, baseline.average * 3)) {
+    await createAndDeliverNotification({
+      user: userId,
+      title: `Unusual expense: ${expense.title}`,
+      message: `₹${expense.amount.toLocaleString('en-IN')} for ${expense.category} is unusually high compared with your recent spending.`,
+      type: 'unusual_expense',
+      refModel: 'Expense',
+      refId: expense._id,
+    });
+  }
+}
 
 // @desc    Get all expenses for logged in user (with optional filtering)
 // @route   GET /api/expenses
@@ -77,6 +96,8 @@ export const createExpense = async (req, res, next) => {
       ...req.body,
       user: req.user._id,
     });
+
+    notifyIfUnusual(expense, req.user._id).catch((e) => console.warn('[UnusualExpense] create:', e.message));
 
     // Real-time broadcast to user's personal room
     try {

@@ -52,13 +52,13 @@ export default function NotificationsPage() {
     switch (type) {
       case 'budget_alert':
         return '⚠️';
-      case 'goal_reached':
+      case 'goal_milestone':
         return '🎯';
       case 'recurring_processed':
         return '🔄';
       case 'group_activity':
         return '👥';
-      case 'anomaly':
+      case 'unusual_expense':
         return '🚨';
       default:
         return 'ℹ️';
@@ -66,7 +66,7 @@ export default function NotificationsPage() {
   };
 
   const filteredList = notifications.filter((n) => {
-    if (filterType === 'unread') return !n.read;
+    if (filterType === 'unread') return !n.isRead;
     if (filterType === 'all') return true;
     return n.type === filterType;
   });
@@ -130,7 +130,7 @@ export default function NotificationsPage() {
               <div
                 key={n._id}
                 className={`p-4 sm:p-5 flex items-start justify-between gap-4 transition-colors ${
-                  n.read
+                  n.isRead
                     ? 'hover:bg-gray-50/50 dark:hover:bg-gray-800/30'
                     : 'bg-indigo-50/40 dark:bg-indigo-950/20 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/40'
                 }`}
@@ -139,10 +139,10 @@ export default function NotificationsPage() {
                   <span className="text-2xl mt-0.5 flex-shrink-0">{getTypeIcon(n.type)}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className={`font-bold text-sm sm:text-base ${n.read ? 'text-gray-800 dark:text-gray-200' : 'text-gray-900 dark:text-white'}`}>
+                      <p className={`font-bold text-sm sm:text-base ${n.isRead ? 'text-gray-800 dark:text-gray-200' : 'text-gray-900 dark:text-white'}`}>
                         {n.title}
                       </p>
-                      {!n.read && (
+                      {!n.isRead && (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-600 text-white">
                           New
                         </span>
@@ -163,7 +163,7 @@ export default function NotificationsPage() {
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  {!n.read && (
+                  {!n.isRead && (
                     <button
                       onClick={() => handleMarkRead(n._id)}
                       className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline px-2 py-1"

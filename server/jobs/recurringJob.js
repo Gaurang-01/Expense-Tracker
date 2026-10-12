@@ -4,6 +4,7 @@ import Expense from '../models/Expense.js';
 import { createAndDeliverNotification } from '../utils/notificationHelper.js';
 import { getIO } from '../socket.js';
 import { emitAnalyticsUpdated } from '../controllers/analyticsController.js';
+import { checkBudgetAlerts } from '../controllers/budgetController.js';
 
 /**
  * Process all due recurring expenses:
@@ -32,6 +33,7 @@ async function processRecurringExpenses() {
           date: r.nextDue,
           user: r.user,
         });
+        await checkBudgetAlerts(r.user);
 
         // Advance nextDue
         const next = new Date(r.nextDue);
@@ -48,6 +50,7 @@ async function processRecurringExpenses() {
           const io = getIO();
           if (io) {
             io.to(r.user.toString()).emit('expense:created', expense);
+            io.to(r.user.toString()).emit('recurring:processed', { recurring: r, expense, nextDue: next });
           }
           emitAnalyticsUpdated(r.user);
         } catch (socketErr) {

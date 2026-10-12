@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
-import { selectTotalBalance, selectDarkMode, selectUser } from '../store/selectors';
+import { selectTotalBalance, selectNetBalance, selectDarkMode, selectUser } from '../store/selectors';
 import { toggleDarkMode, addToast } from '../store/slices/uiSlice';
 import { logout } from '../store/slices/authSlice';
 import { clearExpenses } from '../store/slices/expensesSlice';
 import { socket } from '../lib/socket';
+import BellIcon from './BellIcon';
 
 export default function Header() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const totalBalance = useSelector(selectTotalBalance);
+  const netBalance = useSelector(selectNetBalance);
   const darkMode = useSelector(selectDarkMode);
   const user = useSelector(selectUser);
 
@@ -71,16 +73,16 @@ export default function Header() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
         {/* Logo & Title & Real-time Live Connection Dot */}
         <div className="flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/app" className="flex items-center gap-3 group">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform">
               <span className="text-white text-lg">💰</span>
             </div>
             <div>
               <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white leading-tight">
-                Expense Tracker
+                FinanceFlow
               </h1>
               <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
-                MongoDB Scoped Sync
+                Personal Finance Manager
               </p>
             </div>
           </Link>
@@ -119,51 +121,41 @@ export default function Header() {
         </div>
 
         {/* Right Section: Balance + Dark Mode + User Info + Logout */}
-        <div className="flex items-center gap-3 sm:gap-5">
-          {/* Balance */}
-          <div className="text-right hidden sm:block">
-            <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-              Total Spent
-            </p>
-            <p className="text-lg sm:text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent tabular-nums">
-              ₹{totalBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </p>
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Net Balance & Spent Pill */}
+          <div className="text-right hidden sm:flex items-center gap-3 bg-gray-50 dark:bg-gray-800/60 px-3 py-1.5 rounded-xl border border-gray-100 dark:border-gray-800">
+            <div>
+              <p className="text-[9px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                Net Balance
+              </p>
+              <p className={`text-xs sm:text-sm font-bold tabular-nums ${netBalance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                ₹{netBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+            <div>
+              <p className="text-[9px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                Spent
+              </p>
+              <p className="text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 tabular-nums">
+                ₹{totalBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
           </div>
 
-          {/* Analytics Link */}
-          <Link
-            to="/app/analytics"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200/50 dark:border-indigo-800/40 text-indigo-600 dark:text-indigo-400 text-xs font-semibold transition-colors duration-200"
-            title="Analytics Dashboard"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            <span className="hidden sm:inline">Analytics</span>
-          </Link>
-
-          {/* Admin Panel Link (Only visible to admin role) */}
-          {user?.role === 'admin' && (
-            <Link
-              to="/app/admin"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/50 border border-purple-200/50 dark:border-purple-800/40 text-purple-600 dark:text-purple-300 text-xs font-semibold transition-colors duration-200"
-              title="Admin Panel"
-            >
-              <span className="text-xs">🛡️</span>
-              <span className="hidden sm:inline">Admin Panel</span>
-            </Link>
-          )}
+          {/* Notifications Bell */}
+          {user && <BellIcon />}
 
           {/* Dark Mode Toggle */}
           <button
             id="dark-mode-toggle"
             onClick={() => dispatch(toggleDarkMode())}
-            className="relative w-12 h-6 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+            className="relative w-11 h-6 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
             aria-label="Toggle dark mode"
           >
             <span
               className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md flex items-center justify-center text-xs transition-transform duration-300 ${
-                darkMode ? 'translate-x-6' : 'translate-x-0'
+                darkMode ? 'translate-x-5' : 'translate-x-0'
               }`}
             >
               {darkMode ? '🌙' : '☀️'}

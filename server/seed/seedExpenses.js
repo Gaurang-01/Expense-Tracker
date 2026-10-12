@@ -3,6 +3,13 @@ import mongoose from 'mongoose';
 import connectDB from '../config/db.js';
 import Expense from '../models/Expense.js';
 import User from '../models/User.js';
+import Income from '../models/Income.js';
+import Budget from '../models/Budget.js';
+import Goal from '../models/Goal.js';
+import RecurringExpense from '../models/RecurringExpense.js';
+import Investment from '../models/Investment.js';
+import Group from '../models/Group.js';
+import Notification from '../models/Notification.js';
 
 // ── Category-specific titles and amount ranges ──────────────────────────
 const CATEGORY_CONFIG = {
@@ -233,24 +240,211 @@ async function seed() {
   const earliest = dates[0];
   const latest = dates[dates.length - 1];
 
-  console.log('\n✅ Seed completed successfully!');
-  console.log(`   📊 Total expenses created: ${result.length}`);
-  console.log(`   💰 Total amount: ₹${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`);
-  console.log(`   📅 Date range: ${earliest.toLocaleDateString('en-IN')} → ${latest.toLocaleDateString('en-IN')}`);
-  console.log(`   ⚠️  Outlier expenses: ${OUTLIERS.length}`);
-
-  // Category breakdown
-  const catCounts = {};
-  for (const e of expenses) {
-    catCounts[e.category] = (catCounts[e.category] || 0) + 1;
+  // ── Seed Income ──────────────────────────────────────────────────────
+  await Income.deleteMany({ user: userId });
+  const incomes = [];
+  for (let m = 5; m >= 0; m--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - m, 1);
+    incomes.push({
+      user: userId,
+      source: 'Salary',
+      amount: 75000,
+      date: d,
+      description: `Monthly salary credit (${d.toLocaleString('en-IN', { month: 'short' })})`,
+    });
+    if (m % 2 === 0) {
+      const fd = new Date(now.getFullYear(), now.getMonth() - m, 15);
+      incomes.push({
+        user: userId,
+        source: 'Freelance',
+        amount: rand(15000, 30000),
+        date: fd,
+        description: 'Web development milestone payment',
+      });
+    }
   }
-  console.log('   📁 Category distribution:');
-  for (const [cat, count] of Object.entries(catCounts)) {
-    console.log(`      • ${cat}: ${count} expenses`);
-  }
+  await Income.insertMany(incomes);
+  console.log(`   💵 Seeded ${incomes.length} income transactions`);
 
+  // ── Seed Budgets ─────────────────────────────────────────────────────
+  await Budget.deleteMany({ user: userId });
+  const sampleBudgets = [
+    { category: 'Food', limit: 12000, user: userId },
+    { category: 'Travel', limit: 6000, user: userId },
+    { category: 'Shopping', limit: 8000, user: userId },
+    { category: 'Bills', limit: 10000, user: userId },
+    { category: 'Entertainment', limit: 5000, user: userId },
+  ];
+  await Budget.insertMany(sampleBudgets);
+  console.log(`   📊 Seeded ${sampleBudgets.length} category budgets`);
+
+  // ── Seed Goals ───────────────────────────────────────────────────────
+  await Goal.deleteMany({ user: userId });
+  const sampleGoals = [
+    {
+      user: userId,
+      title: 'Emergency Reserve Fund',
+      targetAmount: 150000,
+      currentAmount: 85000,
+      deadline: new Date(now.getFullYear(), now.getMonth() + 6, 1),
+      category: 'Emergency',
+    },
+    {
+      user: userId,
+      title: 'MacBook Pro M3',
+      targetAmount: 120000,
+      currentAmount: 120000,
+      deadline: new Date(now.getFullYear(), now.getMonth() - 1, 1),
+      category: 'Gadgets',
+    },
+    {
+      user: userId,
+      title: 'Trip to Bali',
+      targetAmount: 80000,
+      currentAmount: 32000,
+      deadline: new Date(now.getFullYear(), now.getMonth() + 4, 15),
+      category: 'Travel',
+    },
+  ];
+  await Goal.insertMany(sampleGoals);
+  console.log(`   🎯 Seeded ${sampleGoals.length} savings goals`);
+
+  // ── Seed Recurring Expenses ──────────────────────────────────────────
+  await RecurringExpense.deleteMany({ user: userId });
+  const sampleRecurring = [
+    {
+      user: userId,
+      title: 'House Rent',
+      amount: 18000,
+      category: 'Bills',
+      frequency: 'monthly',
+      nextDue: new Date(now.getFullYear(), now.getMonth(), 1),
+      isActive: true,
+    },
+    {
+      user: userId,
+      title: 'Netflix Premium',
+      amount: 649,
+      category: 'Entertainment',
+      frequency: 'monthly',
+      nextDue: new Date(now.getFullYear(), now.getMonth(), 18),
+      isActive: true,
+    },
+    {
+      user: userId,
+      title: 'Gym & Fitness Membership',
+      amount: 2500,
+      category: 'Health',
+      frequency: 'monthly',
+      nextDue: new Date(now.getFullYear(), now.getMonth(), 25),
+      isActive: true,
+    },
+    {
+      user: userId,
+      title: 'Airtel Fiber Broadband',
+      amount: 999,
+      category: 'Bills',
+      frequency: 'monthly',
+      nextDue: new Date(now.getFullYear(), now.getMonth(), 10),
+      isActive: true,
+    },
+  ];
+  await RecurringExpense.insertMany(sampleRecurring);
+  console.log(`   🔄 Seeded ${sampleRecurring.length} recurring expenses`);
+
+  // ── Seed Investments ─────────────────────────────────────────────────
+  await Investment.deleteMany({ user: userId });
+  const sampleInvestments = [
+    {
+      user: userId,
+      name: 'NIFTY 50 Index Fund',
+      type: 'Mutual Fund',
+      investedAmount: 50000,
+      currentValue: 58400,
+      notes: 'Monthly SIP via Zerodha Coin',
+    },
+    {
+      user: userId,
+      name: 'Tata Motors',
+      type: 'Stock',
+      investedAmount: 30000,
+      currentValue: 36200,
+      notes: 'Long-term equity holding',
+    },
+    {
+      user: userId,
+      name: 'Sovereign Gold Bonds (SGB)',
+      type: 'Gold',
+      investedAmount: 25000,
+      currentValue: 27500,
+      notes: 'RBI gold tranche',
+    },
+    {
+      user: userId,
+      name: 'Ethereum (ETH)',
+      type: 'Crypto',
+      investedAmount: 15000,
+      currentValue: 18900,
+      notes: 'Cold storage wallet',
+    },
+  ];
+  await Investment.insertMany(sampleInvestments);
+  console.log(`   📈 Seeded ${sampleInvestments.length} investment assets`);
+
+  // ── Seed Groups ──────────────────────────────────────────────────────
+  await Group.deleteMany({ createdBy: userId });
+  const sampleGroup = await Group.create({
+    name: 'Flat 402 Roommates',
+    description: 'Shared flat utilities, groceries, and cleaning',
+    createdBy: userId,
+    members: [userId],
+    expenses: [
+      {
+        description: 'Monthly Wi-Fi & Electricity',
+        amount: 2400,
+        paidBy: userId,
+        category: 'Bills',
+        date: new Date(),
+        splitType: 'equal',
+        splits: [
+          { member: userId, amount: 2400, settled: true },
+        ],
+      },
+    ],
+  });
+  console.log(`   👥 Seeded group: "${sampleGroup.name}"`);
+
+  // ── Seed Notifications ───────────────────────────────────────────────
+  await Notification.deleteMany({ user: userId });
+  const sampleNotifs = [
+    {
+      user: userId,
+      title: 'Welcome to FinanceFlow!',
+      message: 'Your personal finance manager is now equipped with budgets, goals, investments, and live sync.',
+      type: 'info',
+      read: false,
+    },
+    {
+      user: userId,
+      title: 'Budget Alert: Food at 85%',
+      message: 'You have spent 85% of your ₹12,000 monthly Food limit.',
+      type: 'budget_alert',
+      read: false,
+    },
+    {
+      user: userId,
+      title: 'Goal Milestone Achieved!',
+      message: 'Congratulations! You reached 100% of your MacBook Pro M3 savings target.',
+      type: 'goal_reached',
+      read: true,
+    },
+  ];
+  await Notification.insertMany(sampleNotifs);
+  console.log(`   🔔 Seeded ${sampleNotifs.length} notifications`);
+
+  console.log('\n✅ Comprehensive seed completed successfully!');
   await mongoose.disconnect();
-  console.log('\n🔌 Database disconnected.');
+  console.log('🔌 Database disconnected.');
   process.exit(0);
 }
 

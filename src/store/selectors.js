@@ -80,3 +80,55 @@ export const selectCategorySummary = createSelector(
     return { totals, maxTotal, grandTotal };
   }
 );
+
+// ── Income selectors ───────────────────────────────────────────────────
+export const selectIncomeItems = (state) => state.income?.items || [];
+export const selectIncomeLoading = (state) => state.income?.loading || false;
+export const selectIncomeError = (state) => state.income?.error || null;
+export const selectTotalIncome = createSelector(
+  [selectIncomeItems],
+  (items) => (items || []).reduce((sum, i) => sum + (Number(i.amount) || 0), 0)
+);
+
+// ── Net Balance selector (Income - Expenses) ───────────────────────────
+export const selectNetBalance = createSelector(
+  [selectTotalIncome, selectTotalBalance],
+  (totalIncome, totalExpenses) => totalIncome - totalExpenses
+);
+
+// ── Budgets selectors ──────────────────────────────────────────────────
+export const selectBudgetItems = (state) => state.budgets?.items || [];
+export const selectBudgetsLoading = (state) => state.budgets?.loading || false;
+export const selectBudgetsError = (state) => state.budgets?.error || null;
+
+// ── Goals selectors ────────────────────────────────────────────────────
+export const selectGoalItems = (state) => state.goals?.items || [];
+export const selectGoalsLoading = (state) => state.goals?.loading || false;
+export const selectGoalsError = (state) => state.goals?.error || null;
+
+// ── Recurring selectors ────────────────────────────────────────────────
+export const selectRecurringItems = (state) => state.recurring?.items || [];
+export const selectRecurringLoading = (state) => state.recurring?.loading || false;
+export const selectRecurringError = (state) => state.recurring?.error || null;
+
+// ── Notifications selectors ────────────────────────────────────────────
+export const selectNotificationItems = (state) => state.notifications?.items || [];
+export const selectUnreadCount = (state) => state.notifications?.unreadCount || 0;
+export const selectNotificationsLoading = (state) => state.notifications?.loading || false;
+
+// ── Investments selectors ──────────────────────────────────────────────
+export const selectInvestmentItems = (state) => state.investments?.items || [];
+export const selectInvestmentSummary = (state) => state.investments?.summary || {
+  totalInvested: 0,
+  totalCurrent: 0,
+  totalGainLoss: 0,
+  percentageGainLoss: 0,
+  allocation: [],
+};
+export const selectInvestmentsLoading = (state) => state.investments?.loading || false;
+
+// ── Groups selectors ───────────────────────────────────────────────────
+export const selectGroupItems = (state) => state.groups?.items || [];
+export const selectGroupsLoading = (state) => state.groups?.loading || false;
+export const selectGroupsError = (state) => state.groups?.error || null;
+

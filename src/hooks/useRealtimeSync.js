@@ -6,6 +6,9 @@ import {
   socketExpenseUpdated,
   socketExpenseDeleted,
 } from '../store/slices/expensesSlice';
+import { socketNotificationReceived } from '../store/slices/notificationsSlice';
+import { socketRecurringProcessed } from '../store/slices/recurringSlice';
+import { socketGroupUpdated } from '../store/slices/groupsSlice';
 import { addToast } from '../store/slices/uiSlice';
 
 /**
@@ -49,11 +52,33 @@ export function useRealtimeSync() {
       dispatch(addToast(message, 'warning'));
     };
 
+    const handleNotificationNew = (notification) => {
+      dispatch(socketNotificationReceived(notification));
+      if (notification?.title) {
+        dispatch(addToast(`${notification.title}: ${notification.message}`, 'info'));
+      }
+    };
+
+    const handleRecurringProcessed = (payload) => {
+      dispatch(socketRecurringProcessed(payload));
+      if (payload?.expense) {
+        dispatch(socketExpenseCreated(payload.expense));
+      }
+      dispatch(addToast(`Recurring expense processed: ${payload?.expense?.title || 'Bill'}`, 'info'));
+    };
+
+    const handleGroupUpdated = (group) => {
+      dispatch(socketGroupUpdated(group));
+    };
+
     socket.on('expense:created', handleExpenseCreated);
     socket.on('expense:updated', handleExpenseUpdated);
     socket.on('expense:deleted', handleExpenseDeleted);
     socket.on('analytics:updated', handleAnalyticsUpdated);
     socket.on('budget:alert', handleBudgetAlert);
+    socket.on('notification:new', handleNotificationNew);
+    socket.on('recurring:processed', handleRecurringProcessed);
+    socket.on('group:updated', handleGroupUpdated);
 
     return () => {
       socket.off('expense:created', handleExpenseCreated);
@@ -61,6 +86,9 @@ export function useRealtimeSync() {
       socket.off('expense:deleted', handleExpenseDeleted);
       socket.off('analytics:updated', handleAnalyticsUpdated);
       socket.off('budget:alert', handleBudgetAlert);
+      socket.off('notification:new', handleNotificationNew);
+      socket.off('recurring:processed', handleRecurringProcessed);
+      socket.off('group:updated', handleGroupUpdated);
     };
   }, [dispatch, isAuthenticated, token]);
 }

@@ -11,8 +11,16 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import expenseRoutes from './routes/expenseRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import incomeRoutes from './routes/incomeRoutes.js';
+import budgetRoutes from './routes/budgetRoutes.js';
+import goalRoutes from './routes/goalRoutes.js';
+import recurringRoutes from './routes/recurringRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import investmentRoutes from './routes/investmentRoutes.js';
+import groupRoutes from './routes/groupRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
 import { initSocket } from './socket.js';
+import { initRecurringJob } from './jobs/recurringJob.js';
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -96,6 +104,13 @@ if (process.env.NODE_ENV !== 'test') {
 app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/income', incomeRoutes);
+app.use('/api/budgets', budgetRoutes);
+app.use('/api/goals', goalRoutes);
+app.use('/api/recurring', recurringRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/investments', investmentRoutes);
+app.use('/api/groups', groupRoutes);
 
 // ── Health check ─────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
@@ -114,6 +129,8 @@ app.use(errorHandler);
 if (process.env.NODE_ENV !== 'test') {
   const start = async () => {
     await connectDB();
+    // Start recurring expense cron job
+    initRecurringJob();
     httpServer.listen(PORT, () => {
       console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
     });

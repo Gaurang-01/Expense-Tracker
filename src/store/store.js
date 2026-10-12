@@ -2,6 +2,13 @@ import { configureStore } from '@reduxjs/toolkit';
 import authReducer, { logout } from './slices/authSlice';
 import expensesReducer from './slices/expensesSlice';
 import uiReducer from './slices/uiSlice';
+import incomeReducer from './slices/incomeSlice';
+import budgetsReducer from './slices/budgetsSlice';
+import goalsReducer from './slices/goalsSlice';
+import recurringReducer from './slices/recurringSlice';
+import notificationsReducer from './slices/notificationsSlice';
+import investmentsReducer from './slices/investmentsSlice';
+import groupsReducer from './slices/groupsSlice';
 import { saveDarkMode } from '../utils/storage';
 
 const store = configureStore({
@@ -9,6 +16,13 @@ const store = configureStore({
     auth: authReducer,
     expenses: expensesReducer,
     ui: uiReducer,
+    income: incomeReducer,
+    budgets: budgetsReducer,
+    goals: goalsReducer,
+    recurring: recurringReducer,
+    notifications: notificationsReducer,
+    investments: investmentsReducer,
+    groups: groupsReducer,
   },
 });
 

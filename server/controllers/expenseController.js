@@ -1,6 +1,7 @@
 import Expense from '../models/Expense.js';
 import { getIO } from '../socket.js';
 import { emitAnalyticsUpdated } from './analyticsController.js';
+import { checkBudgetAlerts } from './budgetController.js';
 
 // @desc    Get all expenses for logged in user (with optional filtering)
 // @route   GET /api/expenses
@@ -89,6 +90,9 @@ export const createExpense = async (req, res, next) => {
       console.warn('[Socket.IO] Emit expense:created error:', socketErr.message);
     }
 
+    // Check budget thresholds and fire alerts if needed
+    checkBudgetAlerts(req.user._id).catch((e) => console.warn('[BudgetAlert] create:', e.message));
+
     res.status(201).json({
       success: true,
       data: expense,
@@ -130,6 +134,9 @@ export const updateExpense = async (req, res, next) => {
       console.warn('[Socket.IO] Emit expense:updated error:', socketErr.message);
     }
 
+    // Check budget thresholds
+    checkBudgetAlerts(req.user._id).catch((e) => console.warn('[BudgetAlert] update:', e.message));
+
     res.status(200).json({
       success: true,
       data: expense,
@@ -169,6 +176,9 @@ export const deleteExpense = async (req, res, next) => {
     } catch (socketErr) {
       console.warn('[Socket.IO] Emit expense:deleted error:', socketErr.message);
     }
+
+    // Check budget thresholds
+    checkBudgetAlerts(req.user._id).catch((e) => console.warn('[BudgetAlert] delete:', e.message));
 
     res.status(200).json({
       success: true,
